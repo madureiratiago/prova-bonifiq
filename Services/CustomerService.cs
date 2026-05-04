@@ -1,21 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using ProvaPub.Interfaces;
 using ProvaPub.Models;
 using ProvaPub.Repository;
 
 namespace ProvaPub.Services
 {
-    public class CustomerService
+    public class CustomerService : PagedService<Customer>, ICustomerService
     {
-        TestDbContext _ctx;
+        private readonly TestDbContext _ctx;
 
-        public CustomerService(TestDbContext ctx)
-        {
-            _ctx = ctx;
-        }
+        public CustomerService(TestDbContext ctx) : base(ctx) { }
 
-        public CustomerList ListCustomers(int page)
+        public PagedResult<Customer> ListCustomers(int page)
         {
-            return new CustomerList() { HasNext = false, TotalCount = 10, Customers = _ctx.Customers.ToList() };
+            return GetPaged(_ctx.Customers.AsQueryable(), page);
+
         }
 
         public async Task<bool> CanPurchase(int customerId, decimal purchaseValue)
