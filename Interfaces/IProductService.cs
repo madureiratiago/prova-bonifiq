@@ -1,11 +1,8 @@
 ﻿using ProvaPub.Models;
 
-namespace ProvaPub.Interfaces
+namespace ProvaPub.Interfaces;
+
+public interface IProductService
 {
-
-    public interface IProductService
-    {
-        PagedResult<Product> ListProducts(int page);
-    }
-
+    PagedResult<Product> ListProducts(int page);
 }

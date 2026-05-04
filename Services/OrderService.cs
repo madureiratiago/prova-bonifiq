@@ -1,44 +1,44 @@
-﻿using ProvaPub.Models;
+﻿using ProvaPub.Interfaces;
+using ProvaPub.Models;
 using ProvaPub.Repository;
 
-namespace ProvaPub.Services
+public class OrderService
 {
-	public class OrderService
-	{
-        TestDbContext _ctx;
+    private readonly TestDbContext _ctx;
+    private readonly IEnumerable<IPaymentStrategy> _paymentStrategies;
 
-        public OrderService(TestDbContext ctx)
+    public OrderService(TestDbContext ctx, IEnumerable<IPaymentStrategy> paymentStrategies)
+    {
+        _ctx = ctx;
+        _paymentStrategies = paymentStrategies;
+    }
+
+    public async Task<Order> PayOrder(string paymentMethod, decimal paymentValue, int customerId)
+    {
+        var strategy = _paymentStrategies
+            .FirstOrDefault(p => p.PaymentMethod == paymentMethod.ToLower());
+
+        //Não lançar exceções. Uma boa forma de não pesar o código. Não quiz me alongar aqui mas, sigo: 
+        //https://www.wellingtonjhn.com/posts/n%C3%A3o-lance-exceptions-em-seu-dom%C3%ADnio-use-notifications/
+        //Uso também o patner Either : https://stackoverflow.com/questions/63231450/how-to-use-the-either-type-in-c
+        if (strategy == null)
+            throw new ArgumentException("Forma de pagamento inválida");
+
+        await strategy.ProcessPayment(paymentValue, customerId);
+
+        var order = new Order
         {
-            _ctx = ctx;
-        }
+            Value = paymentValue,
+            OrderDate = DateTime.UtcNow // ✅ UTC
+        };
 
-        public async Task<Order> PayOrder(string paymentMethod, decimal paymentValue, int customerId)
-		{
-			if (paymentMethod == "pix")
-			{
-				//Faz pagamento...
-			}
-			else if (paymentMethod == "creditcard")
-			{
-				//Faz pagamento...
-			}
-			else if (paymentMethod == "paypal")
-			{
-				//Faz pagamento...
-			}
+        return await InsertOrder(order);
+    }
 
-			return await InsertOrder(new Order() //Retorna o pedido para o controller
-            {
-                Value = paymentValue
-            });
-
-
-		}
-
-		public async Task<Order> InsertOrder(Order order)
-        {
-			//Insere pedido no banco de dados
-			return (await _ctx.Orders.AddAsync(order)).Entity;
-        }
-	}
+    private async Task<Order> InsertOrder(Order order)
+    {
+        await _ctx.Orders.AddAsync(order);
+        await _ctx.SaveChangesAsync();
+        return order;
+    }
 }

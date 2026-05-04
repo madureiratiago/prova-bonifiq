@@ -1,12 +1,10 @@
 ﻿using ProvaPub.Models;
 
-namespace ProvaPub.Interfaces
+namespace ProvaPub.Interfaces;
+
+
+public interface ICustomerService
 {
-
-    public interface ICustomerService
-    {
-        PagedResult<Customer> ListCustomers(int page);
-        Task<bool> CanPurchase(int customerId, decimal purchaseValue);
-    }
-
+    PagedResult<Customer> ListCustomers(int page);
+    Task<bool> CanPurchase(int customerId, decimal purchaseValue);
 }
